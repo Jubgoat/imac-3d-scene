@@ -1,0 +1,10 @@
+cmake-4.2.2/
+out/
+.vs/
+build/
+*.exe
+*.obj
+*.pdb
+*.ilk
+vertexShader.glsl
+fragmentShader.glsl
