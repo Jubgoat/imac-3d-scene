@@ -75,13 +75,17 @@ void ShaderManager::use()
     glUseProgram(m_CurrentProgram);
 }
 
-void ShaderManager::SetMat4(GLuint program, const std::string& name, const glm::mat4& mat)
+ShaderManager::ShaderManager()
+    : m_CurrentProgram(0),
+    m_CachedProgram(0)
 {
     GLint loc = glGetUniformLocation(program, name.c_str());
     glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
-void ShaderManager::SetVec3(GLuint program, const std::string& name, const glm::vec3& value)
+ShaderManager::~ShaderManager()
+{
+    if (m_CurrentProgram != 0)
 {
     GLint loc = glGetUniformLocation(program, name.c_str());
     glUniform3f(loc, value.x, value.y, value.z);
@@ -132,19 +136,27 @@ void ShaderManager::setMat4Value(const std::string& name, const glm::mat4& value
 
 void ShaderManager::LoadShaders(const char* vertexPath, const char* fragmentPath)
 {
-    // Read vertex shader file
-    std::ifstream vertexFile(vertexPath);
-    std::stringstream vertexStream;
-    vertexStream << vertexFile.rdbuf();
-    std::string vertexSource = vertexStream.str();
+    std::string vertexSource;
+    std::string fragmentSource;
     
-    // Read fragment shader file
-    std::ifstream fragmentFile(fragmentPath);
-    std::stringstream fragmentStream;
-    fragmentStream << fragmentFile.rdbuf();
-    std::string fragmentSource = fragmentStream.str();
+    if (!ReadTextFile(vertexPath, vertexSource) || !ReadTextFile(fragmentPath, fragmentSource))
+    {
+        return false;
+    }
     
     // Create shader program
     GLuint program = CreateShaderProgram(vertexSource.c_str(), fragmentSource.c_str());
+    if (program == 0)
+    {
+        return false;
+    }
+
+    // Replace any program loaded earlier so it is not leaked
+    GLuint oldProgram = m_CurrentProgram;
     UseProgram(program);
+    if (oldProgram != 0 && oldProgram != program)
+    {
+        glDeleteProgram(oldProgram);
+    }
+    return true;
 }
